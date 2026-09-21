@@ -96,18 +96,62 @@
         .item-original { font-size: 13px; color: var(--muted); text-decoration: line-through; }
 
         .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+
+        .topbar-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+        .icon-links { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .icon-link {
+            position: relative;
+            display: flex; align-items: center; gap: 6px;
+            border: 1px solid var(--line); background: #fff;
+            border-radius: 999px; padding: 8px 14px;
+            font-size: 13px; font-weight: 500; color: var(--ink);
+            text-decoration: none;
+        }
+        .icon-link:hover { border-color: var(--amber); color: var(--amber-deep); }
+        .icon-link svg { width: 16px; height: 16px; }
+        .icon-badge {
+            background: var(--amber); color: #fff;
+            font-size: 11px; font-weight: 600; line-height: 1;
+            padding: 2px 6px; border-radius: 999px;
+        }
+
+        .status-toast { margin-top: 16px; font-size: 14px; color: var(--amber-deep); background: rgba(201,138,60,0.1); border: 1px solid rgba(201,138,60,0.3); border-radius: 6px; padding: 10px 14px; }
+
+        .item-actions { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+        .btn-add-cart {
+            flex: 1;
+            background: var(--ink); color: var(--paper);
+            border: none; border-radius: 6px;
+            padding: 9px 12px; font-size: 13px; font-weight: 500;
+            cursor: pointer; font-family: inherit;
+        }
+        .btn-add-cart:hover { background: var(--ink-light); }
+        .wish-btn {
+            width: 36px; height: 36px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            border: 1px solid var(--line); background: #fff;
+            border-radius: 6px; cursor: pointer;
+            color: var(--muted);
+        }
+        .wish-btn:hover { border-color: var(--amber); color: var(--amber-deep); }
+        .wish-btn.active { background: var(--amber); border-color: var(--amber); color: #fff; }
+        .wish-btn svg { width: 16px; height: 16px; }
     </style>
 </head>
 <body>
     @php $isSeller = auth()->user()->role === 'seller'; @endphp
 
+
     <div class="layout">
         <aside class="sidebar">
             <div>
+{{ auth()->user()->role }}
                 <a href="/" class="logo"><span class="dot"></span>Trove</a>
                 <nav>
                     <a href="{{ route('home') }}" class="active">Home</a>
                     <a href="{{ route('dashboard') }}">Overview</a>
+                    
+                    
                     @if ($isSeller)
                         <a href="#">Listings</a>
                         <a href="#">Orders</a>
@@ -132,8 +176,32 @@
 
         <div>
             <header class="topbar">
-                <h1 class="greeting">Browse what's on sale</h1>
-                <p class="lead">Search across every seller's storefront on Trove.</p>
+                <div class="topbar-row">
+                    <div>
+                        <h1 class="greeting">Browse what's on sale</h1>
+                        <p class="lead">Search across every seller's storefront on Trove.</p>
+                    </div>
+                    <div class="icon-links">
+                        <a href="{{ route('wishlist.index') }}" class="icon-link">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                            Wishlist
+                            @if ($wishlistCount > 0)
+                                <span class="icon-badge">{{ $wishlistCount }}</span>
+                            @endif
+                        </a>
+                        <a href="{{ route('cart.index') }}" class="icon-link">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>
+                            Cart
+                            @if ($cartCount > 0)
+                                <span class="icon-badge">{{ $cartCount }}</span>
+                            @endif
+                        </a>
+                    </div>
+                </div>
+
+                @if (session('status'))
+                    <div class="status-toast">{{ session('status') }}</div>
+                @endif
 
                 <form method="GET" action="{{ route('home') }}" class="search-row">
                     <div class="search-box">
@@ -185,6 +253,20 @@
                                         @if ($item->isOnSale())
                                             <span class="item-original">${{ number_format($item->original_price, 2) }}</span>
                                         @endif
+                                    </div>
+
+                                    <div class="item-actions">
+                                        <form method="POST" action="{{ route('cart.store', $item) }}" style="flex: 1;">
+                                            @csrf
+                                            <button type="submit" class="btn-add-cart">Add to cart</button>
+                                        </form>
+                                        <form method="POST" action="{{ route('wishlist.toggle', $item) }}">
+                                            @csrf
+                                            @php $isWishlisted = in_array($item->id, $wishlistedIds); @endphp
+                                            <button type="submit" class="wish-btn {{ $isWishlisted ? 'active' : '' }}" aria-label="Toggle wishlist" title="{{ $isWishlisted ? 'Remove from wishlist' : 'Add to wishlist' }}">
+                                                <svg viewBox="0 0 24 24" fill="{{ $isWishlisted ? 'currentColor' : 'none' }}" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
                             </div>
