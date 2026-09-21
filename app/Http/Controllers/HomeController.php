@@ -17,10 +17,16 @@ class HomeController extends Controller
             ->latest()
             ->get();
 
+        $wishlistedIds = auth()->user()->wishlistItems()->pluck('product_id')->toArray();
+        $cartCount = (int) auth()->user()->cartItems()->sum('quantity');
+
         return view('marketplace.home', [
             'items' => $items,
             'query' => $query,
             'categories' => ['All', 'Home & Living', 'Ceramics', 'Lighting', 'Textiles', 'Stationery'],
+            'wishlistedIds' => $wishlistedIds,
+            'cartCount' => $cartCount,
+            'wishlistCount' => count($wishlistedIds),
         ]);
     }
 }

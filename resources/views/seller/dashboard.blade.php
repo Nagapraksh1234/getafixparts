@@ -88,7 +88,6 @@
             <div>
                 <a href="/" class="logo"><span class="dot"></span>Trove</a>
                 <nav>
-                    <a href="{{ route('home') }}">Home</a>
                     <a href="{{ route('dashboard') }}" class="active">Overview</a>
                     <a href="#">Listings</a>
                     <a href="#">Orders</a>
