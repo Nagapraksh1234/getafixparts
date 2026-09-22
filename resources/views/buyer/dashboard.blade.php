@@ -79,12 +79,11 @@
             <div>
                 <a href="/" class="logo"><span class="dot"></span>Trove</a>
                 <nav>
-                    {{ auth()->user()->role }}
                     <a href="{{ route('home') }}">Home</a>
                     <a href="{{ route('dashboard') }}" class="active">Overview</a>
-                    <a href="#">Orders</a>
-                    <a href="#">Saved items</a>
-                    <a href="#">Messages</a>
+                    <a href="{{ route('orders.index') }}">Orders</a>
+                    <a href="{{ route('wishlist.index') }}">Saved items</a>
+                    <a href="{{ route('cart.index') }}">Cart</a>
                     <a href="#">Settings</a>
                 </nav>
             </div>

@@ -67,6 +67,7 @@
                     <a href="{{ route('dashboard') }}">Overview</a>
                     <a href="{{ route('wishlist.index') }}">Wishlist</a>
                     <a href="{{ route('cart.index') }}" class="active">Cart</a>
+                    <a href="{{ route('orders.index') }}">Orders</a>
                     <a href="#">Settings</a>
                 </nav>
             </div>
@@ -123,7 +124,7 @@
                         <div class="summary">
                             <div class="summary-row"><span>Items</span><span>{{ $items->sum('quantity') }}</span></div>
                             <div class="summary-row summary-total"><span>Subtotal</span><span>${{ number_format($subtotal, 2) }}</span></div>
-                            <button type="button" class="checkout-btn">Checkout</button>
+                            <a href="{{ route('checkout.show') }}" class="checkout-btn" style="display: block; text-align: center; text-decoration: none; box-sizing: border-box;">Checkout</a>
                         </div>
                     </div>
                 @endif

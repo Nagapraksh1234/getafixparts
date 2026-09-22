@@ -23,7 +23,7 @@ class HomeController extends Controller
         return view('marketplace.home', [
             'items' => $items,
             'query' => $query,
-            'categories' => ['All', 'Home & Living', 'Ceramics', 'Lighting', 'Textiles', 'Stationery'],
+            'categories' => ['All', 'Home & Living', 'Ceramics', 'Lighting', 'Textiles', 'Stationery' , 'Electronics'],
             'wishlistedIds' => $wishlistedIds,
             'cartCount' => $cartCount,
             'wishlistCount' => count($wishlistedIds),

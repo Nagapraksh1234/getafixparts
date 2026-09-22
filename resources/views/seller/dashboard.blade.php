@@ -46,6 +46,8 @@
         .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         @media (min-width: 640px) { .stats { grid-template-columns: repeat(4, 1fr); } }
         .stat-card { border: 1px solid var(--line); background: #fff; border-radius: 6px; padding: 16px 20px; }
+        .status-toast { margin: 24px 24px 0; font-size: 14px; color: var(--amber-deep); background: rgba(201,138,60,0.1); border: 1px solid rgba(201,138,60,0.3); border-radius: 6px; padding: 10px 14px; }
+        @media (min-width: 1024px) { .status-toast { margin: 24px 40px 0; } }
         .stat-label { margin: 0; font-size: 12px; color: var(--muted); }
         .stat-value-row { margin-top: 6px; display: flex; align-items: baseline; gap: 8px; }
         .stat-value { margin: 0; font-family: Georgia, serif; font-size: 24px; }
@@ -88,6 +90,7 @@
             <div>
                 <a href="/" class="logo"><span class="dot"></span>Trove</a>
                 <nav>
+                    <a href="{{ route('home') }}">Home</a>
                     <a href="{{ route('dashboard') }}" class="active">Overview</a>
                     <a href="#">Listings</a>
                     <a href="#">Orders</a>
@@ -112,13 +115,17 @@
                     <h1 class="greeting">{{ auth()->user()->store_name ?? 'Your store' }}</h1>
                 </div>
                 <div class="topbar-actions">
-                    <a href="#" class="btn-new">+ New listing</a>
+                    <a href="{{ route('listings.create') }}" class="btn-new">+ New listing</a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="logout-mobile">Log out</button>
                     </form>
                 </div>
             </header>
+
+            @if (session('status'))
+                <div class="status-toast">{{ session('status') }}</div>
+            @endif
 
             <main>
                 <div class="stats">
