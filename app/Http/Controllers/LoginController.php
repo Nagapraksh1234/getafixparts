@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -63,45 +66,95 @@ class LoginController extends Controller
         return redirect('/');
     }
 
+    /**
+     * Real data for the buyer dashboard, pulled from orders/wishlist tables.
+     */
     protected function buyerData(User $user): array
     {
+        $orders = Order::with('items.product.seller')
+            ->where('user_id', $user->id)
+            ->latest()
+            ->get();
+
+        $activeOrders = $orders->where('status', 'pending')->count();
+        $totalSpent = $orders->sum('subtotal');
+        $savedItems = $user->wishlistItems()->count();
+
+        $recentOrders = $orders->take(4)->map(function (Order $order) {
+            $firstItem = $order->items->first();
+            $extra = $order->items->count() - 1;
+
+            return [
+                'id' => '#TR-' . str_pad($order->id, 5, '0', STR_PAD_LEFT),
+                'item' => $firstItem
+                    ? $firstItem->product->name . ($extra > 0 ? " +{$extra} more" : '')
+                    : 'Order',
+                'seller' => $firstItem
+                    ? ($firstItem->product->seller->store_name ?? $firstItem->product->seller->name)
+                    : '—',
+                'date' => $order->created_at->format('M j'),
+                'total' => '$' . number_format($order->subtotal, 2),
+                'status' => $order->status,
+            ];
+        });
+
+        $categories = Product::query()->distinct()->pluck('category')->filter()->values()->all();
+
         return [
             'stats' => [
-                ['label' => 'Active orders', 'value' => '3'],
-                ['label' => 'Total spent', 'value' => '$1,284'],
-                ['label' => 'Saved items', 'value' => '12'],
-                ['label' => 'Open messages', 'value' => '2'],
+                ['label' => 'Active orders', 'value' => (string) $activeOrders],
+                ['label' => 'Total spent', 'value' => '$' . number_format($totalSpent, 2)],
+                ['label' => 'Saved items', 'value' => (string) $savedItems],
+                ['label' => 'Open messages', 'value' => '—'],
             ],
-            'orders' => [
-                ['id' => '#TR-10482', 'item' => 'Walnut writing desk', 'seller' => 'Amber & Oak', 'date' => 'Sep 18', 'total' => '$420.00', 'status' => 'In transit'],
-                ['id' => '#TR-10471', 'item' => 'Ceramic pour-over set', 'seller' => 'Kiln Studio', 'date' => 'Sep 14', 'total' => '$68.00', 'status' => 'Delivered'],
-                ['id' => '#TR-10459', 'item' => 'Wool throw blanket', 'seller' => 'Northfield Textiles', 'date' => 'Sep 10', 'total' => '$96.00', 'status' => 'Delivered'],
-                ['id' => '#TR-10440', 'item' => 'Brass desk lamp', 'seller' => 'Foundry Goods', 'date' => 'Sep 6', 'total' => '$142.00', 'status' => 'Processing'],
-            ],
-            'categories' => ['Home & Living', 'Ceramics', 'Lighting', 'Textiles', 'Stationery'],
+            'orders' => $recentOrders,
+            'categories' => $categories,
         ];
     }
 
+    /**
+     * Real data for the seller dashboard, pulled from order_items/products.
+     */
     protected function sellerData(User $user): array
     {
+        $orderItems = OrderItem::with(['order', 'product'])
+            ->where('seller_id', $user->id)
+            ->get();
+
+        $revenueThisMonth = $orderItems
+            ->filter(fn (OrderItem $item) => $item->order->created_at->isCurrentMonth())
+            ->sum(fn (OrderItem $item) => $item->lineTotal());
+
+        $ordersToFulfill = $orderItems->where('status', 'pending')->pluck('order_id')->unique()->count();
+        $activeListings = Product::where('user_id', $user->id)->count();
+
+        $recentOrders = $orderItems->sortByDesc('created_at')->take(4)->map(function (OrderItem $item) {
+            return [
+                'id' => '#TR-' . str_pad($item->order_id, 5, '0', STR_PAD_LEFT),
+                'item' => $item->product->name,
+                'buyer' => $item->order->shipping_name,
+                'date' => $item->created_at->format('M j'),
+                'total' => '$' . number_format($item->lineTotal(), 2),
+                'status' => $item->status,
+                'order_item_id' => $item->id,
+            ];
+        })->values();
+
+        $lowStock = Product::where('user_id', $user->id)
+            ->where('stock', '<=', 3)
+            ->orderBy('stock')
+            ->get()
+            ->map(fn (Product $product) => ['name' => $product->name, 'left' => $product->stock]);
+
         return [
             'stats' => [
-                ['label' => 'Revenue this month', 'value' => '$8,420', 'delta' => '+12%'],
-                ['label' => 'Orders to fulfill', 'value' => '6', 'delta' => null],
-                ['label' => 'Active listings', 'value' => '34', 'delta' => null],
-                ['label' => 'Store views', 'value' => '2,150', 'delta' => '+4%'],
+                ['label' => 'Revenue this month', 'value' => '$' . number_format($revenueThisMonth, 2), 'delta' => null],
+                ['label' => 'Orders to fulfill', 'value' => (string) $ordersToFulfill, 'delta' => null],
+                ['label' => 'Active listings', 'value' => (string) $activeListings, 'delta' => null],
+                ['label' => 'Store views', 'value' => '—', 'delta' => null],
             ],
-            'orders' => [
-                ['id' => '#TR-10482', 'item' => 'Walnut writing desk', 'buyer' => 'M. Alvarez', 'date' => 'Sep 18', 'total' => '$420.00', 'status' => 'Pending'],
-                ['id' => '#TR-10475', 'item' => 'Oak side table', 'buyer' => 'J. Osei', 'date' => 'Sep 17', 'total' => '$210.00', 'status' => 'Pending'],
-                ['id' => '#TR-10471', 'item' => 'Bookshelf, small', 'buyer' => 'R. Kapoor', 'date' => 'Sep 14', 'total' => '$310.00', 'status' => 'Paid'],
-                ['id' => '#TR-10459', 'item' => 'Coat rack', 'buyer' => 'S. Lindqvist', 'date' => 'Sep 10', 'total' => '$96.00', 'status' => 'Fulfilled'],
-            ],
-            'lowStock' => [
-                ['name' => 'Walnut writing desk', 'left' => 1],
-                ['name' => 'Brass drawer pulls (set of 4)', 'left' => 2],
-                ['name' => 'Linen napkin set', 'left' => 3],
-            ],
+            'orders' => $recentOrders,
+            'lowStock' => $lowStock,
         ];
     }
 }

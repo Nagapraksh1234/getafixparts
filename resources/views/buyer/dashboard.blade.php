@@ -62,9 +62,9 @@
         @media (min-width: 768px) { .col-optional-md { display: table-cell; } }
 
         .pill { font-size: 12px; padding: 3px 10px; border-radius: 999px; font-weight: 500; display: inline-block; }
-        .pill-delivered { background: rgba(76,124,89,0.12); color: #2F6B45; }
-        .pill-transit { background: rgba(201,138,60,0.14); color: #A66D28; }
-        .pill-processing { background: rgba(107,117,104,0.12); color: #6B7568; }
+        .pill-fulfilled { background: rgba(76,124,89,0.12); color: #2F6B45; }
+        .pill-pending { background: rgba(201,138,60,0.14); color: #A66D28; }
+        .pill-cancelled { background: rgba(107,117,104,0.12); color: #6B7568; }
 
         .chips { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; }
         .chip { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 8px 16px; font-size: 14px; text-decoration: none; color: var(--ink); }
@@ -122,8 +122,11 @@
                 <div class="section">
                     <div class="section-head">
                         <h2>Recent orders</h2>
-                        <a href="#">View all</a>
+                        <a href="{{ route('orders.index') }}">View all</a>
                     </div>
+                    @if ($orders->isEmpty())
+                        <p style="margin-top: 16px; font-size: 14px; color: var(--muted);">No orders yet — <a href="{{ route('home') }}" style="color: var(--amber-deep); font-weight: 500;">browse what's on sale</a>.</p>
+                    @else
                     <div class="table-wrap">
                         <table>
                             <thead>
@@ -147,18 +150,19 @@
                                         <td>
                                             @php
                                                 $cls = match ($order['status']) {
-                                                    'Delivered' => 'pill-delivered',
-                                                    'In transit' => 'pill-transit',
-                                                    default => 'pill-processing',
+                                                    'fulfilled' => 'pill-fulfilled',
+                                                    'cancelled' => 'pill-cancelled',
+                                                    default => 'pill-pending',
                                                 };
                                             @endphp
-                                            <span class="pill {{ $cls }}">{{ $order['status'] }}</span>
+                                            <span class="pill {{ $cls }}" style="text-transform: capitalize;">{{ $order['status'] }}</span>
                                         </td>
                                     </tr>
                                 @endforeach
                             </tbody>
                         </table>
                     </div>
+                    @endif
                 </div>
 
                 <div class="section">

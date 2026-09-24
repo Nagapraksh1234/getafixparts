@@ -18,11 +18,13 @@ class Product extends Model
         'image',
         'price',
         'original_price',
+        'stock',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'original_price' => 'decimal:2',
+        'stock' => 'integer',
     ];
 
     public function seller(): BelongsTo
@@ -33,6 +35,11 @@ class Product extends Model
     public function isOnSale(): bool
     {
         return ! is_null($this->original_price);
+    }
+
+    public function isLowStock(): bool
+    {
+        return $this->stock <= 3;
     }
 
     public function scopeSearch(Builder $query, ?string $term): Builder

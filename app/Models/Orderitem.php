@@ -13,6 +13,7 @@ class OrderItem extends Model
         'seller_id',
         'quantity',
         'price',
+        'status',
     ];
 
     protected $casts = [
@@ -37,5 +38,21 @@ class OrderItem extends Model
     public function lineTotal(): float
     {
         return (float) $this->price * $this->quantity;
+    }
+
+    /**
+     * Mark this line fulfilled, then promote the parent Order to
+     * "fulfilled" too if every line on it (across all sellers) is done.
+     */
+    public function markFulfilled(): void
+    {
+        $this->update(['status' => 'fulfilled']);
+
+        $order = $this->order;
+        $allDone = $order->items()->where('status', '!=', 'fulfilled')->doesntExist();
+
+        if ($allDone) {
+            $order->update(['status' => 'fulfilled']);
+        }
     }
 }

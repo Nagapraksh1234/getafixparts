@@ -25,6 +25,7 @@ class ListingController extends Controller
             'category' => ['required', 'string', 'max:255'],
             'price' => ['required', 'numeric', 'min:0'],
             'original_price' => ['nullable', 'numeric', 'gt:price'],
+            'stock' => ['required', 'integer', 'min:0'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'], // 4MB
         ], [
             'original_price.gt' => 'The original price must be higher than the sale price.',
@@ -35,12 +36,7 @@ class ListingController extends Controller
         if ($request->hasFile('image')) {
             $file = $request->file('image');
             $filename = uniqid('product_') . '.' . $file->getClientOriginalExtension();
-
-            // Saves straight into public/images/products so it works with
-            // the same asset()/public_path() checks used on the Home page —
-            // no storage:link needed.
             $file->move(public_path('images/products'), $filename);
-
             $imagePath = 'images/products/' . $filename;
         }
 
@@ -50,6 +46,7 @@ class ListingController extends Controller
             'category' => $validated['category'],
             'price' => $validated['price'],
             'original_price' => $validated['original_price'] ?? null,
+            'stock' => $validated['stock'],
             'image' => $imagePath,
         ]);
 
