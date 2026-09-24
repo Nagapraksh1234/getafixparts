@@ -5,7 +5,9 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ListingController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\RegisterController;
+use App\Http\Controllers\SellerOrderController;
 use App\Http\Controllers\WishlistController;
 use Illuminate\Support\Facades\Route;
 
@@ -47,4 +49,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/checkout', [OrderController::class, 'store'])->name('checkout.store');
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+
+    // Seller orders & payouts (sellers only — enforced inside the controllers)
+    Route::get('/seller/orders', [SellerOrderController::class, 'index'])->name('seller.orders');
+    Route::post('/seller/orders/{orderItem}/fulfill', [SellerOrderController::class, 'fulfill'])->name('seller.orders.fulfill');
+    Route::get('/seller/payouts', [PaymentController::class, 'index'])->name('seller.payouts');
 });

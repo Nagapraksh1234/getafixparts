@@ -114,6 +114,13 @@
                         </div>
 
                         <div class="field">
+                            <label for="stock">Stock quantity</label>
+                            <input id="stock" type="number" name="stock" min="0" value="{{ old('stock', 20) }}" required style="max-width: 140px;">
+                            <span class="hint">We'll flag it as running low once it drops to 3 or fewer.</span>
+                            @error('stock') <p class="error">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div class="field">
                             <label for="image">Photo</label>
                             <input id="image" type="file" name="image" accept="image/*">
                             <span class="hint">JPG, PNG or WEBP, up to 4MB.</span>

@@ -71,9 +71,8 @@
         @media (min-width: 640px) { .col-optional-sm { display: table-cell; } }
 
         .pill { font-size: 12px; padding: 3px 10px; border-radius: 999px; font-weight: 500; display: inline-block; }
-        .pill-paid { background: rgba(76,124,89,0.12); color: #2F6B45; }
+        .pill-fulfilled { background: rgba(76,124,89,0.12); color: #2F6B45; }
         .pill-pending { background: rgba(201,138,60,0.14); color: #A66D28; }
-        .pill-fulfilled { background: rgba(107,117,104,0.12); color: #6B7568; }
 
         .stock-list { margin-top: 16px; border: 1px solid var(--line); background: #fff; border-radius: 6px; }
         .stock-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; font-size: 14px; border-bottom: 1px solid var(--line); }
@@ -93,8 +92,8 @@
                     <a href="{{ route('home') }}">Home</a>
                     <a href="{{ route('dashboard') }}" class="active">Overview</a>
                     <a href="#">Listings</a>
-                    <a href="#">Orders</a>
-                    <a href="#">Payouts</a>
+                    <a href="{{ route('seller.orders') }}">Orders</a>
+                    <a href="{{ route('seller.payouts') }}">Payouts</a>
                     <a href="#">Settings</a>
                 </nav>
             </div>
@@ -146,8 +145,11 @@
                     <div>
                         <div class="section-head">
                             <h2>Recent orders</h2>
-                            <a href="#">View all</a>
+                            <a href="{{ route('seller.orders') }}">View all</a>
                         </div>
+                        @if ($orders->isEmpty())
+                            <p style="margin-top: 16px; font-size: 14px; color: var(--muted);">No orders yet.</p>
+                        @else
                         <div class="table-wrap">
                             <table>
                                 <thead>
@@ -168,19 +170,16 @@
                                             <td>{{ $order['total'] }}</td>
                                             <td>
                                                 @php
-                                                    $cls = match ($order['status']) {
-                                                        'Paid' => 'pill-paid',
-                                                        'Pending' => 'pill-pending',
-                                                        default => 'pill-fulfilled',
-                                                    };
+                                                    $cls = $order['status'] === 'fulfilled' ? 'pill-fulfilled' : 'pill-pending';
                                                 @endphp
-                                                <span class="pill {{ $cls }}">{{ $order['status'] }}</span>
+                                                <span class="pill {{ $cls }}" style="text-transform: capitalize;">{{ $order['status'] }}</span>
                                             </td>
                                         </tr>
                                     @endforeach
                                 </tbody>
                             </table>
                         </div>
+                        @endif
                     </div>
 
                     <div>
